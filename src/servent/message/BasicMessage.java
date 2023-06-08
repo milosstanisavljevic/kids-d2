@@ -2,7 +2,9 @@ package servent.message;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import app.AppConfig;
@@ -20,36 +22,60 @@ public class BasicMessage implements Message {
 	private static final long serialVersionUID = -9075856313609777945L;
 	private final MessageType type;
 	private final ServentInfo originalSenderInfo;
+	private ServentInfo originalReceiverInfo;
 	private final ServentInfo receiverInfo;
 	private final List<ServentInfo> routeList;
-	private final String messageText;
-	private final boolean white;
-	
+	private String messageText;
+	protected Map<Integer,Integer> senderVectorClock;
+
 	//This gives us a unique id - incremented in every natural constructor.
 	private static AtomicInteger messageCounter = new AtomicInteger(0);
 	private final int messageId;
-	
-	public BasicMessage(MessageType type, ServentInfo originalSenderInfo, ServentInfo receiverInfo) {
+
+	public BasicMessage(MessageType type, ServentInfo originalSenderInfo, ServentInfo originalReceiverInfo,
+						ServentInfo receiverInfo, Map<Integer, Integer> senderVectorClock) {
 		this.type = type;
 		this.originalSenderInfo = originalSenderInfo;
+		this.originalReceiverInfo = originalReceiverInfo;
 		this.receiverInfo = receiverInfo;
-		this.white = AppConfig.isWhite.get();
 		this.routeList = new ArrayList<>();
+		this.senderVectorClock = new ConcurrentHashMap<>(senderVectorClock);
 		this.messageText = "";
-		
 		this.messageId = messageCounter.getAndIncrement();
 	}
-	
+
+	public BasicMessage(MessageType type, ServentInfo originalSenderInfo, ServentInfo originalReceiverInfo,
+						ServentInfo receiverInfo, Map<Integer, Integer> senderVectorClock, String messageText) {
+		this.type = type;
+		this.originalSenderInfo = originalSenderInfo;
+		this.originalReceiverInfo = originalReceiverInfo;
+		this.receiverInfo = receiverInfo;
+		this.routeList = new ArrayList<>();
+		this.senderVectorClock = new ConcurrentHashMap<>(senderVectorClock);
+		this.messageText = messageText;
+		this.messageId = messageCounter.getAndIncrement();
+	}
 	public BasicMessage(MessageType type, ServentInfo originalSenderInfo, ServentInfo receiverInfo,
-			String messageText) {
+						String messageText) {
 		this.type = type;
 		this.originalSenderInfo = originalSenderInfo;
 		this.receiverInfo = receiverInfo;
-		this.white = AppConfig.isWhite.get();
 		this.routeList = new ArrayList<>();
 		this.messageText = messageText;
-		
+
 		this.messageId = messageCounter.getAndIncrement();
+	}
+
+	protected BasicMessage(MessageType type, ServentInfo originalSenderInfo, ServentInfo originalReceiverInfo,
+						   ServentInfo receiverInfo, Map<Integer, Integer> senderVectorClock, List<ServentInfo> routeList, String messageText, int messageId) {
+		this.type = type;
+		this.originalSenderInfo = originalSenderInfo;
+		this.originalReceiverInfo = originalReceiverInfo;
+		this.receiverInfo = receiverInfo;
+		this.routeList = routeList;
+		this.senderVectorClock = senderVectorClock;
+		this.messageText = messageText;
+		this.messageId = messageId;
 	}
 	
 	@Override
@@ -66,11 +92,7 @@ public class BasicMessage implements Message {
 	public ServentInfo getReceiverInfo() {
 		return receiverInfo;
 	}
-	
-	@Override
-	public boolean isWhite() {
-		return white;
-	}
+
 	
 	@Override
 	public List<ServentInfo> getRoute() {
@@ -87,12 +109,10 @@ public class BasicMessage implements Message {
 		return messageId;
 	}
 	
-	protected BasicMessage(MessageType type, ServentInfo originalSenderInfo, ServentInfo receiverInfo,
-			boolean white, List<ServentInfo> routeList, String messageText, int messageId) {
+	protected BasicMessage(MessageType type, ServentInfo originalSenderInfo, ServentInfo receiverInfo, List<ServentInfo> routeList, String messageText, int messageId) {
 		this.type = type;
 		this.originalSenderInfo = originalSenderInfo;
 		this.receiverInfo = receiverInfo;
-		this.white = white;
 		this.routeList = routeList;
 		this.messageText = messageText;
 		
@@ -111,7 +131,7 @@ public class BasicMessage implements Message {
 		List<ServentInfo> newRouteList = new ArrayList<>(routeList);
 		newRouteList.add(newRouteItem);
 		Message toReturn = new BasicMessage(getMessageType(), getOriginalSenderInfo(),
-				getReceiverInfo(), isWhite(), newRouteList, getMessageText(), getMessageId());
+				getReceiverInfo(), newRouteList, getMessageText(), getMessageId());
 		
 		return toReturn;
 	}
@@ -126,7 +146,7 @@ public class BasicMessage implements Message {
 			ServentInfo newReceiverInfo = AppConfig.getInfoById(newReceiverId);
 			
 			Message toReturn = new BasicMessage(getMessageType(), getOriginalSenderInfo(),
-					newReceiverInfo, isWhite(), getRoute(), getMessageText(), getMessageId());
+					newReceiverInfo, getRoute(), getMessageText(), getMessageId());
 			
 			return toReturn;
 		} else {
@@ -136,22 +156,7 @@ public class BasicMessage implements Message {
 		}
 		
 	}
-	
-	@Override
-	public Message setRedColor() {
-		Message toReturn = new BasicMessage(getMessageType(), getOriginalSenderInfo(),
-				getReceiverInfo(), false, getRoute(), getMessageText(), getMessageId());
-		
-		return toReturn;
-	}
-	
-	@Override
-	public Message setWhiteColor() {
-		Message toReturn = new BasicMessage(getMessageType(), getOriginalSenderInfo(),
-				getReceiverInfo(), true, getRoute(), getMessageText(), getMessageId());
-		
-		return toReturn;
-	}
+
 	
 	/**
 	 * Comparing messages is based on their unique id and the original sender id.
@@ -195,5 +200,22 @@ public class BasicMessage implements Message {
 	@Override
 	public void sendEffect() {
 		
+	}
+
+	@Override
+	public void setMessageText(String message) {
+		this.messageText = message;
+	}
+
+	public ServentInfo getOriginalReceiverInfo() {
+		return originalReceiverInfo;
+	}
+
+	public void setOriginalReceiverInfo(ServentInfo originalReceiverInfo) {
+		this.originalReceiverInfo = originalReceiverInfo;
+	}
+
+	public Map<Integer, Integer> getSenderVectorClock() {
+		return senderVectorClock;
 	}
 }

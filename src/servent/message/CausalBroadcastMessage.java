@@ -1,4 +1,4 @@
-package servent.messeges;
+package servent.message;
 
 import app.ServentInfo;
 
@@ -13,7 +13,8 @@ import java.util.Map;
  * @author bmilojkovic
  *
  */
-public class CausalBroadcastMessage extends BasicMessage{
+public class CausalBroadcastMessage extends BasicMessage
+{
     private static final long serialVersionUID = 7952273798396080816L;
     private Map<Integer, Integer> senderVectorClock;
 

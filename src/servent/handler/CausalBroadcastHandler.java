@@ -1,8 +1,16 @@
-package servent.handlers;
+package servent.handler;
 
+import app.AppConfig;
 import app.CausalBroadcastShared;
-import servent.messeges.Message;
-import servent.messeges.MessageType;
+import app.ServentInfo;
+import app.snapshot_bitcake.SnapshotCollector;
+import servent.message.Message;
+import servent.message.MessageType;
+import servent.message.util.MessageUtil;
+
+import java.util.Objects;
+import java.util.Set;
+
 
 /**
  * Handles the CAUSAL_BROADCAST message. Fairly simple, as we assume that we are
@@ -13,40 +21,47 @@ import servent.messeges.MessageType;
  */
 public class CausalBroadcastHandler implements MessageHandler {
 
-    private Message clientMessage;
+    private final Message clientMessage;
+    private final Set<Message> receivedBroadcasts;
+    private final SnapshotCollector snapshotCollector;
 
-    public CausalBroadcastHandler(Message clientMessage) {
+
+
+    public CausalBroadcastHandler(Message clientMessage, SnapshotCollector snapshotCollector, Set<Message> receivedBroadcasts) {
         this.clientMessage = clientMessage;
+        this.snapshotCollector = snapshotCollector;
+        this.receivedBroadcasts = receivedBroadcasts;
+
     }
 
     @Override
     public void run() {
-        //Sanity check.
-        if (clientMessage.getMessageType() == MessageType.CAUSAL_BROADCAST) {
-            /*
-             * Same print as the one in BROADCAST handler.
-             * Kind of useless here, as we assume a clique.
-             */
+        ServentInfo senderInfo = clientMessage.getOriginalSenderInfo();
 
-			/*
-			ServentInfo senderInfo = clientMessage.getOriginalSenderInfo();
-			ServentInfo lastSenderInfo = clientMessage.getRoute().size() == 0 ?
-					clientMessage.getOriginalSenderInfo() :
-					clientMessage.getRoute().get(clientMessage.getRoute().size()-1);
+        if (senderInfo.getId() == AppConfig.myServentInfo.getId()) {
+            //We are the sender :o someone bounced this back to us. /ignore
+            AppConfig.timestampedStandardPrint("Got own message back. No rebroadcast.");
+        } else {
+                boolean didPut = receivedBroadcasts.add(clientMessage);
 
-			String text = String.format("Got %s from %s causally broadcast by %s\n",
-					clientMessage.getMessageText(), lastSenderInfo, senderInfo);
-			AppConfig.timestampedStandardPrint(text);
-			*/
+                if (didPut) {
+                    CausalBroadcastShared.addPendingMessage(clientMessage);
+                    CausalBroadcastShared.checkPendingMessages();
 
-            /*
-             * Uncomment the next line and comment out the two afterwards
-             * to see what happens when causality is broken.
-             */
-//			CausalBroadcastShared.commitCausalMessage(clientMessage);
+                    if (!AppConfig.IS_CLIQUE) {
+                        //New message for us. Rebroadcast it.
+                        AppConfig.timestampedStandardPrint("Rebroadcasting... " + receivedBroadcasts.size());
 
-            CausalBroadcastShared.addPendingMessage(clientMessage);
-            CausalBroadcastShared.checkPendingMessages();
+                        for (Integer neighbor : AppConfig.myServentInfo.getNeighbors()) {
+                            //Same message, different receiver, and add us to the route table.
+                            MessageUtil.sendMessage(clientMessage.changeReceiver(neighbor).makeMeASender());
+                        }
+                    }
+                } else {
+                    //We already got this from somewhere else. /ignore
+                    AppConfig.timestampedStandardPrint("Already had this. No rebroadcast.");
+                }
+
         }
     }
 }

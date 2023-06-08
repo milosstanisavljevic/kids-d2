@@ -1,18 +1,16 @@
-package servent.message.av;
+package servent.message.snapshot;
 
 import app.ServentInfo;
 import servent.message.BasicMessage;
 import servent.message.MessageType;
 
-import java.io.Serial;
 import java.util.Map;
 
-public class AvAskTokenMessage extends BasicMessage {
+public class AVAskMessage extends BasicMessage {
 
-    @Serial
-    private static final long serialVersionUID = -7283310091422165288L;
+    private static final long serialVersionUID = 656784329642914372L;
 
-    public AvAskTokenMessage(ServentInfo sender, ServentInfo receiver, ServentInfo neighbor, Map<Integer, Integer> senderVectorClock) {
+    public AVAskMessage(ServentInfo sender, ServentInfo receiver, ServentInfo neighbor, Map<Integer, Integer> senderVectorClock) {
         super(MessageType.AV_ASK, sender, receiver, neighbor, senderVectorClock);
     }
 

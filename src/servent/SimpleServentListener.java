@@ -12,12 +12,11 @@ import java.util.concurrent.Executors;
 import app.AppConfig;
 import app.Cancellable;
 import app.snapshot_bitcake.SnapshotCollector;
-import app.snapshot_bitcake.SnapshotType;
 import servent.handler.MessageHandler;
 import servent.handler.NullHandler;
 import servent.handler.TransactionHandler;
+import servent.handler.snapshot.ABAskHandler;
 import servent.message.Message;
-import servent.message.MessageType;
 import servent.message.util.MessageUtil;
 
 public class SimpleServentListener implements Runnable, Cancellable {
@@ -74,12 +73,16 @@ public class SimpleServentListener implements Runnable, Cancellable {
 				 * because that way is much simpler and less error prone.
 				 */
 				switch (clientMessage.getMessageType()) {
-				case TRANSACTION:
-					messageHandler = new TransactionHandler(clientMessage, snapshotCollector.getBitcakeManager());
-					break;
+					case TRANSACTION:
+						messageHandler = new TransactionHandler(clientMessage, snapshotCollector.getBitcakeManager());
+						break;
 
-				case POISON:
-					break;
+					case POISON:
+						break;
+
+					case AB_ASK:	messageHandler = new ABAskHandler(clientMessage,snapshotCollector);
+					case CAUSAL_BROADCAST:
+					case AB_TELL:
 				}
 				
 				threadPool.submit(messageHandler);

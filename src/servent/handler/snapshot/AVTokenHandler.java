@@ -1,20 +1,20 @@
-package servent.handler.av;
+package servent.handler.snapshot;
 
 import app.AppConfig;
 import app.CausalBroadcastShared;
 import app.snapshot_bitcake.SnapshotCollector;
 import servent.handler.MessageHandler;
 import servent.message.Message;
-import servent.message.av.AvDoneMessage;
+import servent.message.snapshot.AVDoneMessage;
 import servent.message.util.MessageUtil;
 
-public class AvAskTokenHandler implements MessageHandler {
+public class AVTokenHandler implements MessageHandler {
 
     private final Message clientMessage;
     private final SnapshotCollector snapshotCollector;
     private final Integer currentBitcakeAmount;
 
-    public AvAskTokenHandler(Message clientMessage, Integer currentBitcakeAmount, SnapshotCollector snapshotCollector) {
+    public AVTokenHandler(Message clientMessage, Integer currentBitcakeAmount, SnapshotCollector snapshotCollector) {
         this.clientMessage = clientMessage;
         this.snapshotCollector = snapshotCollector;
         this.currentBitcakeAmount = currentBitcakeAmount;
@@ -31,7 +31,7 @@ public class AvAskTokenHandler implements MessageHandler {
         CausalBroadcastShared.tokenVectorClock = clientMessage.getSenderVectorClock();
         CausalBroadcastShared.recordedAmount = currentBitcakeAmount;
         CausalBroadcastShared.initiatorId = clientMessage.getReceiverInfo().getId();
-        Message doneMessage = new AvDoneMessage(AppConfig.myServentInfo, clientMessage.getOriginalSenderInfo(), null, clientMessage.getSenderVectorClock(), clientMessage.getOriginalSenderInfo().getId());
+        Message doneMessage = new AVDoneMessage(AppConfig.myServentInfo, clientMessage.getOriginalSenderInfo(), null, clientMessage.getSenderVectorClock(), clientMessage.getOriginalSenderInfo().getId());
 
         for (Integer neighbor : AppConfig.myServentInfo.getNeighbors()) {
             doneMessage = doneMessage.changeReceiver(neighbor);

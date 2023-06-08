@@ -1,18 +1,15 @@
-package servent.message.av;
+package servent.message.snapshot;
 
 import app.ServentInfo;
 import servent.message.BasicMessage;
 import servent.message.MessageType;
-
-import java.io.Serial;
 import java.util.Map;
 
-public class AvTerminateMessage extends BasicMessage {
+public class AVTerminateMessage extends BasicMessage {
 
-    @Serial
-    private static final long serialVersionUID = 2787944576523041787L;
+    private static final long serialVersionUID = 2618200693534225853L;
 
-    public AvTerminateMessage(ServentInfo sender, ServentInfo receiver, ServentInfo neighbor, Map<Integer, Integer> senderVectorClock) {
+    public AVTerminateMessage(ServentInfo sender, ServentInfo receiver, ServentInfo neighbor, Map<Integer, Integer> senderVectorClock) {
         super(MessageType.AV_TERMINATE, sender, receiver, neighbor, senderVectorClock);
     }
 

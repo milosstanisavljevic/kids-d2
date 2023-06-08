@@ -1,4 +1,4 @@
-package servent.handler.av;
+package servent.handler.snapshot;
 
 import app.AppConfig;
 import app.CausalBroadcastShared;
@@ -8,12 +8,12 @@ import servent.message.Message;
 
 import java.util.Map;
 
-public class AvTerminateHandler implements MessageHandler {
+public class AVTerminateHandler implements MessageHandler {
 
     private final Message clientMessage;
     private final SnapshotCollector snapshotCollector;
 
-    public AvTerminateHandler(Message clientMessage, SnapshotCollector snapshotCollector) {
+    public AVTerminateHandler(Message clientMessage, SnapshotCollector snapshotCollector) {
         this.clientMessage = clientMessage;
         this.snapshotCollector = snapshotCollector;
     }
