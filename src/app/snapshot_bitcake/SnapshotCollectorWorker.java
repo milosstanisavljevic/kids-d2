@@ -4,11 +4,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import app.AppConfig;
+import app.CausalBroadcastShared;
 import servent.message.Message;
 import servent.message.util.MessageUtil;
+
+import static app.snapshot_bitcake.SnapshotType.AB;
 
 /**
  * Main snapshot collector class. Has support for Naive, Chandy-Lamport
@@ -23,10 +27,11 @@ public class SnapshotCollectorWorker implements SnapshotCollector {
 	
 	private AtomicBoolean collecting = new AtomicBoolean(false);
 	
-	private Map<String, Integer> collectedNaiveValues = new ConcurrentHashMap<>();
+	private List<Integer> collectedDoneValues = new CopyOnWriteArrayList<>();
+	private Map<String,Integer> collectedNaiveValues = new ConcurrentHashMap<>();
 	
-	private SnapshotType snapshotType = SnapshotType.NAIVE;
-	
+	private SnapshotType snapshotType;
+	private Map<Integer,ABBitcakeResult> collectedABValues = new ConcurrentHashMap<>();
 	private BitcakeManager bitcakeManager;
 
 	public SnapshotCollectorWorker(SnapshotType snapshotType) {
@@ -34,9 +39,15 @@ public class SnapshotCollectorWorker implements SnapshotCollector {
 		
 		switch(snapshotType) {
 
-		case NONE:
-			AppConfig.timestampedErrorPrint("Making snapshot collector without specifying type. Exiting...");
-			System.exit(0);
+			case AB:
+				bitcakeManager = new ABBitcakeManager();
+
+			case AV:
+				bitcakeManager = new AVBitcakeManager();
+
+			case NONE:
+				AppConfig.timestampedErrorPrint("Making snapshot collector without specifying type. Exiting...");
+				System.exit(0);
 		}
 	}
 	
@@ -71,13 +82,17 @@ public class SnapshotCollectorWorker implements SnapshotCollector {
 			 * 2. Wait for all the responses
 			 * 3. Print result
 			 */
-			
+			Map<Integer,Integer> vectorClock;
+			Message askMsg;
 			//1 send asks
 			switch (snapshotType) {
-
-			case NONE:
+				case AB:
+					vectorClock = new ConcurrentHashMap<>(CausalBroadcastShared.getVectorClock());
+					//askMsg = new Ab
+					break;// ((ABBitcakeManager)bitcakeManager);
+				case NONE:
 				//Shouldn't be able to come here. See constructor. 
-				break;
+					break;
 			}
 			
 			//2 wait for responses or finish
@@ -143,7 +158,22 @@ public class SnapshotCollectorWorker implements SnapshotCollector {
 			AppConfig.timestampedErrorPrint("Tried to start collecting before finished with previous.");
 		}
 	}
-	
+
+	@Override
+	public void addDoneValues(int id) {
+		collectedDoneValues.add(id);
+	}
+
+	@Override
+	public void clearCollectedDoneValues() {
+
+	}
+
+	@Override
+	public Map<String, ABBitcakeResult> getCollectedAbValues() {
+		return null;
+	}
+
 	@Override
 	public void stop() {
 		working = false;

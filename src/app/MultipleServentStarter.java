@@ -29,7 +29,7 @@ public class MultipleServentStarter {
 	 * The main thread is waiting for processes to end naturally.
 	 */
 	private static class ServentCLI implements Runnable {
-		
+
 		private List<Process> serventProcesses;
 		
 		public ServentCLI(List<Process> serventProcesses) {
@@ -61,7 +61,7 @@ public class MultipleServentStarter {
 	 */
 	private static void startServentTest(String testName) {
 		List<Process> serventProcesses = new ArrayList<>();
-		
+
 		AppConfig.readConfig(testName+"/servent_list.properties");
 		
 		AppConfig.timestampedStandardPrint("Starting multiple servent runner. "
@@ -105,7 +105,7 @@ public class MultipleServentStarter {
 	}
 	
 	public static void main(String[] args) {
-		startServentTest("snapshot-primer");
+		startServentTest("snapshot_ab");
 	}
 
 }
